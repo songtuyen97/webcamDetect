@@ -2,6 +2,7 @@ import { Component, Output, EventEmitter } from '@angular/core';
 import {WebcamImage, WebcamInitError, WebcamUtil} from 'ngx-webcam';
 import { Subject, Observable } from 'rxjs';
 import { HttpService } from 'src/services/http.service';
+declare var faceapi: any;
 // import {} from 'http';
 @Component({
   selector: 'app-root',
@@ -12,9 +13,15 @@ export class AppComponent {
   // @Output()
   constructor(
     private http: HttpService
-  ) {}
+  ) {
+    // this.initFaceapi();
+  }
   // public pictureTaken = new EventEmitter<WebcamImage>();
-
+  async initFaceapi() {
+    await faceapi.nets.ssdMobilenetv1.loadFromUri('/assets/models');
+    let detection = await faceapi.detectSingleFace(document.getElementById('myImg'))
+    console.log(detection);
+  }
   // toggle webcam on/off
   public showWebcam = true;
   public allowCameraSwitch = true;
@@ -41,7 +48,8 @@ export class AppComponent {
       .then((mediaDevices: MediaDeviceInfo[]) => {
         this.multipleWebcamsAvailable = mediaDevices && mediaDevices.length > 1;
       });
-    this.toggleDetecting();
+    // this.toggleDetecting();
+    this.autoShot();
   }
   public toggleDetecting() {
     setTimeout(() => {
@@ -51,6 +59,12 @@ export class AppComponent {
       this.status_detecting = false;
       this.status_completed = true;
     }, 3000);
+  }
+  public autoShot() {
+    setTimeout(() => {
+      this.triggerSnapshot();
+      this.autoShot();
+    }, 500);
   }
   public triggerSnapshot(): void {
     this.trigger.next();
@@ -87,7 +101,9 @@ export class AppComponent {
     // Create a FormData and append the file with "image" as parameter name
     var formDataToUpload = new FormData();
     formDataToUpload.append("userPhoto", blob);
-
+    
+    //
+    this.initFaceapi();
     // console.log(formDataToUpload);
     //post
     return;

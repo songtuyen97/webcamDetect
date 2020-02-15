@@ -13,15 +13,15 @@
 										<div class="actionBtn" (click)="showNextWebcam(true);" title="Switch Camera">🔁</div> -->
 				</div>
 			</div>
+			<div class="d-none">
+				<img id="myImg" [src]="webcamImageB64" alt="" height="300" width="300">
+			</div>
 			<ng-container *ngIf="status_detecting && !status_completed">
 				<div class="col-12 text-center">
 					<img src="./assets/image/loading.gif" alt="" height="70%" width="70%">
 					<p class="text-danger font-weight-bold">Detecting...</p>
 				</div>
 				<div>
-					<div>
-						<img [src]="webcamImageB64" alt="" height="300" width="300">
-					</div>
 					<h5 *ngIf="errors.length > 0">ERROR</h5>
 					<ul *ngFor="let error of errors">
 						<li><p class="text-danger ">{{error | json}}</p></li>
