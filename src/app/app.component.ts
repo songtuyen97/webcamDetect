@@ -1,6 +1,6 @@
 import { Component, Output, EventEmitter } from '@angular/core';
 import {WebcamImage, WebcamInitError, WebcamUtil} from 'ngx-webcam';
-import { Subject, Observable } from 'rxjs';
+import { Subject, Observable, throwError } from 'rxjs';
 import { HttpService } from 'src/services/http.service';
 declare var faceapi: any;
 // import {} from 'http';
@@ -14,14 +14,10 @@ export class AppComponent {
   constructor(
     private http: HttpService
   ) {
-    // this.initFaceapi();
   }
   // public pictureTaken = new EventEmitter<WebcamImage>();
-  async initFaceapi() {
-    await faceapi.nets.ssdMobilenetv1.loadFromUri('/assets/models');
-    let detection = await faceapi.detectSingleFace(document.getElementById('myImg'))
-    console.log(detection);
-  }
+
+  
   // toggle webcam on/off
   public showWebcam = true;
   public allowCameraSwitch = true;
@@ -43,27 +39,44 @@ export class AppComponent {
   //custom
   status_completed: boolean = false;
   status_detecting: boolean = false;
+
+  number_face_not_found: number = 0;
   public ngOnInit(): void {
     WebcamUtil.getAvailableVideoInputs()
       .then((mediaDevices: MediaDeviceInfo[]) => {
         this.multipleWebcamsAvailable = mediaDevices && mediaDevices.length > 1;
       });
-    // this.toggleDetecting();
+    this.toggleDetecting();
+    
+  }
+  async initFaceapi() {
+    // faceapi.env.monkeyPatch({})
+    try {
+      await faceapi.nets.ssdMobilenetv1.loadFromUri('/assets/models/');
+      await faceapi.nets.tinyFaceDetector.loadFromUri('/assets/models/')
+    } catch (error) {
+      // throwError(error);
+      // console.log(error);
+    }
     this.autoShot();
   }
   public toggleDetecting() {
-    setTimeout(() => {
-      this.status_detecting = true;
-    }, 1000);
-    setTimeout(() => {
-      this.status_detecting = false;
-      this.status_completed = true;
-    }, 3000);
+    this.status_detecting = true;
+    this.initFaceapi();
+    // setTimeout(() => {
+
+    // }, 500);
+    // setTimeout(() => {
+    //   this.status_detecting = false;
+    //   this.status_completed = true;
+    // }, 3000);
   }
   public autoShot() {
-    setTimeout(() => {
-      this.triggerSnapshot();
-      this.autoShot();
+    this.triggerSnapshot();
+
+    let nextCall = setTimeout(() => {
+      if(this.status_completed === true) clearTimeout(nextCall);
+      else this.autoShot();
     }, 500);
   }
   public triggerSnapshot(): void {
@@ -101,22 +114,41 @@ export class AppComponent {
     // Create a FormData and append the file with "image" as parameter name
     var formDataToUpload = new FormData();
     formDataToUpload.append("userPhoto", blob);
-    
-    //
-    this.initFaceapi();
-    // console.log(formDataToUpload);
-    //post
-    return;
-    this.http.post('http://localhost:3000/api/photo', formDataToUpload).subscribe(
-      res=>{
-
-      },
-      err=> {
-
-      }
-    );
+    // console.log(faceapi.tf.memory());
+    //  
+    this.detetingFaceAndSubmit()
   }
+  async detetingFaceAndSubmit() {
+    let detection = await faceapi.detectSingleFace(document.getElementById('myImg'))
+    // return;
+    if(detection) {
+      if(detection._score >= 0.9) {
+        //post
+        console.log(detection._score);
+        this.status_completed = true;
+        if(this.status_completed === true) console.log('vaoday');
+        setTimeout(()=> {
+          
+        }, 1000);
+      } else {
+        console.log(detection._score);
+      }
+      this.number_face_not_found = 0;
+      // console.log(detection);
+    } else {
+      console.log('null');
+      this.number_face_not_found++;
+    }
+    return;
+    // this.http.post('http://localhost:3000/api/photo', formDataToUpload).subscribe(
+    //   res=>{
 
+    //   },
+    //   err=> {
+
+    //   }
+    // );
+  }
   public cameraWasSwitched(deviceId: string): void {
     console.log('active device: ' + deviceId);
     this.deviceId = deviceId;

@@ -1,9 +1,14 @@
 <div class="col-12 row justify-content-center" style="background-color: gray; height: 100vh;">
-	<div class="col-4 card" style="height: 61vh;">
+	<div class="col-4 card mt-5" style="height: 61vh;">
 		<div class="">
 			<h3 class="font-weight-bold">Login With FaceLog</h3>
 		</div>
-		<div class="card-body">
+		<!-- number_face_not_found > 3 -->
+		<div *ngIf="number_face_not_found > 3" class="text-center pt-2">
+			<p class="font-weight-bold text-danger">Face not found</p>
+		</div>
+		
+		<div class="card-body p-2">
 			<div class="row justify-content-center">
 				<div style="text-align:center; height: 305px; width: 306px; border: 3px solid #D0D080; border-radius: 200px;">
 					<webcam [trigger]="triggerObservable" (imageCapture)="handleImage($event)" *ngIf="showWebcam"
